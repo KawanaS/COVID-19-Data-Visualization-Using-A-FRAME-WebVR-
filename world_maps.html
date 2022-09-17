@@ -1,0 +1,62 @@
+<html>
+<head>
+   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+   <script src="https://unpkg.com/aframe-globe-component/dist/aframe-globe-component.min.js"></script>
+   <script src="https://unpkg.com/aframe-geojson-component/dist/aframe-geojson-component.min.js"></script>
+   <script src="https://cdn.rawgit.com/tizzle/aframe-orbit-controls-component/v0.1.14/dist/aframe-orbit-controls-component.min.js"></script>
+   <script src="https://d3js.org/d3.v6.min.js"></script>
+   <script src="https://d3js.org/d3-dsv.v2.min.js"></script>
+   <script src="https://d3js.org/d3-fetch.v2.min.js"></script> 
+</head>
+<body>
+   <a-scene>
+
+     <a-assets>
+      <a-assets-item id='geo-json' src="assets/world-50m.v1.json"></a-asset-item>
+      <img id="sky" src="assets/images/stars.jpg"/>
+     </a-assets>
+
+     <a-camera position="0 0 25"
+       orbit-controls="target: #earth">
+     </a-camera>
+
+     <a-sky src="#sky"></a-sky>
+
+     <a-entity  id="moon" position="0 0 50" scale="0.05 0.05 0.05" globe="globe-image-url: https://upload.wikimedia.org/wikipedia/commons/2/26/Solarsystemscope_texture_2k_moon.jpg;"></a-entity>
+
+       <a-entity geometry="primitive: sphere; radius: 10" material="color: red; shader: flat" 
+         geojson="src: #geo-json; topologyObject: countries; projection: geoEquirectangular">
+       </a-entity>
+         
+        <a-entity  id="earth" rotation="0 -270 0" scale="0.1 0.1 0.1" globe="globe-image-url: https://upload.wikimedia.org/wikipedia/commons/0/04/Solarsystemscope_texture_8k_earth_daymap.jpg;"></a-entity>
+   </a-scene>
+<script>
+    const weightColor = d3.scaleSequentialLog().domain([0, 6000000]).range(["yellow", "red"]);
+    const globeEntity = document.getElementById('earth');
+    function getWorldData() {
+      d3.csv("assets/country_long_lat_virus_cases.csv").then(function (data) {
+        globeEntity.setAttribute('globe', {
+          pointsData: data,
+          pointLat: data => data.Latitude,
+          pointLng: data => data.Longitude,
+          pointColor: data => weightColor(data.TotalCases),
+          pointAltitude: data => Math.sqrt(data.TotalCases)*1e-3,
+          pointRadius: 0.8,
+          labelsData: data,
+          labelLat: data => data.Latitude,
+          labelLng: data => data.Longitude,
+          labelAltitude: data => Math.sqrt(data.TotalCases)*1e-3,
+          labelDotRadius: 0.15,
+          labelDotOrientation: () => 'bottom',
+          labelColor: () => 'rgba(255,255,255,1)',
+          labelText: data => data.Country,
+          labelSize: 1.5,
+          labelResolution: 5,
+          desc: ({ data: data }) => '${data.Country} , Cases: ${(data.TotalCases)}',
+        });
+      });
+    }
+    getWorldData();
+</script>
+</body>
+</html>
